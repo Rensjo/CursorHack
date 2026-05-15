@@ -1,6 +1,11 @@
 // Sonovera backend client — compare endpoint only (multipart).
+// Set VITE_API_BASE in .env (see .env.example). Empty → use "/api" (Vite dev proxy).
 
-const BASE = import.meta.env.VITE_API_BASE || "/api";
+const rawBase = import.meta.env.VITE_API_BASE;
+const BASE =
+  typeof rawBase === "string" && rawBase.trim().length > 0
+    ? rawBase.trim().replace(/\/+$/, "")
+    : "/api";
 
 function dataURLToBlob(dataURL) {
   const idx = dataURL.indexOf(",");
