@@ -1,21 +1,29 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import VerdictCard from "./VerdictCard.jsx";
-import DMCAModal from "./DMCAModal.jsx";
 import ForensicFrame from "./ForensicFrame.jsx";
 import { makeCaseId } from "../lib/caseId.js";
 
-function ImageTile({ label, code, fig, src }) {
+function b64PNG(src) {
+  if (!src) return "";
+  if (src.startsWith("data:")) return src;
+  return `data:image/png;base64,${src}`;
+}
+
+function ImageTile({ label, subtitle, code, fig, src }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
         <span>
           {label}{" "}
-          <span className="text-faint">
-            · fig. {fig}
-          </span>
+          <span className="text-faint">· fig. {fig}</span>
         </span>
         <span className="chip-trace py-0.5 text-[8px] tracking-[0.35em]">{code}</span>
       </div>
+      {subtitle && (
+        <p className="font-mono text-[10px] normal-case leading-relaxed tracking-normal text-faint">
+          {subtitle}
+        </p>
+      )}
       <ForensicFrame className="overflow-hidden rounded-sm">
         <div className="aspect-square overflow-hidden border border-border bg-bg/50">
           <img src={src} alt={label} className="h-full w-full object-cover" />
@@ -25,18 +33,16 @@ function ImageTile({ label, code, fig, src }) {
   );
 }
 
-export default function ResultsScreen({
-  comparison,
-  description,
-  descriptionLoading,
-  descriptionError,
-  images,
-  onReset,
-}) {
-  const [showDMCA, setShowDMCA] = useState(false);
+export default function ResultsScreen({ comparison, images, onReset }) {
   const caseId = useMemo(() => makeCaseId(), []);
 
-  const overlaySrc = `data:image/png;base64,${comparison.overlay_base64}`;
+  const heatmapSrc = b64PNG(comparison.heatmap_base64);
+  const overlaySrc = b64PNG(comparison.overlay_base64);
+
+  const box = comparison.tamper_box;
+  const boxVerbose = box
+    ? `Normalized coordinates (256×256 SSIM canvas): x ∈ [${box.x1}, ${box.x2}], y ∈ [${box.y1}, ${box.y2}]. Width ${box.x2 - box.x1}px, height ${box.y2 - box.y1}px.`
+    : "No contiguous tamper island exceeded the threshold — changes may be diffuse or below the cut."
 
   return (
     <div className="relative z-10 mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -45,7 +51,7 @@ export default function ResultsScreen({
           <div className="flex flex-wrap items-center gap-3">
             <span className="label-eyebrow text-accent">Sonovera · Case file</span>
             <span className="chip-trace border-verdict-orange/40 text-verdict-orange">
-              Sealed output
+              Compare pass complete
             </span>
           </div>
           <h1 className="mt-4 font-display text-4xl italic drop-shadow-[0_3px_22px_rgba(5,15,25,0.8)] md:text-6xl">
@@ -57,11 +63,11 @@ export default function ResultsScreen({
               {caseId}
             </span>
             <span className="hidden sm:inline">·</span>
-            <span className="text-muted">Render timestamp {new Date().toLocaleString()}</span>
+            <span className="text-muted">Render timestamp · {new Date().toLocaleString()}</span>
           </div>
         </div>
-        <button onClick={onReset} className="btn-ghost shrink-0">
-          ← New acquisition
+        <button type="button" onClick={onReset} className="btn-ghost shrink-0">
+          ← New comparison
         </button>
       </header>
 
@@ -77,71 +83,94 @@ export default function ResultsScreen({
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div className="label-eyebrow text-accent">Exhibit matrix</div>
           <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-faint">
-            Side-by-side · tamper channel highlighted
+            Four channels · original, suspect, pure heatmap, overlay
           </div>
         </div>
-        <div className="grid gap-5 md:grid-cols-3">
-          <ImageTile label="Original" code="A" fig="1" src={images.original} />
-          <ImageTile label="Suspect" code="B" fig="2" src={images.suspect} />
-          <ImageTile label="Tamper map" code="Δ" fig="3" src={overlaySrc} />
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <ImageTile
+            label="Original"
+            subtitle="Exhibit A — reference frame you provided."
+            code="A"
+            fig="1"
+            src={images.original}
+          />
+          <ImageTile
+            label="Suspect"
+            subtitle="Exhibit B — image under investigation."
+            code="B"
+            fig="2"
+            src={images.suspect}
+          />
+          <ImageTile
+            label="Structural Δ heatmap"
+            subtitle="SSIM difference map (amplified). Green ≈ unchanged structure, red ≈ local break."
+            code="Δ"
+            fig="3"
+            src={heatmapSrc}
+          />
+          <ImageTile
+            label="Composited overlay"
+            subtitle="Heatmap blended over the resized original (~55% opacity) for judge-ready context."
+            code="A+Δ"
+            fig="4"
+            src={overlaySrc}
+          />
         </div>
-        {comparison.tamper_box && (
-          <div className="mt-4 rounded-sm border border-border/80 bg-bg/35 px-4 py-2 font-mono text-[10px] uppercase tracking-wider text-muted backdrop-blur-sm">
-            Bounding box hypothesis · ({comparison.tamper_box.x1},{comparison.tamper_box.y1}) → (
-            {comparison.tamper_box.x2},{comparison.tamper_box.y2}) — pixels in normalized canvas
-          </div>
-        )}
+
+        <ForensicFrame scan className="panel forensic-grid mt-6 overflow-hidden p-5 md:p-6">
+          <div className="label-eyebrow mb-3 text-accent">Tamper localization</div>
+          <p className="font-mono text-sm leading-relaxed text-muted">{boxVerbose}</p>
+          {box && (
+            <dl className="mt-4 grid gap-2 font-mono text-[11px] text-faint sm:grid-cols-2">
+              <div className="flex justify-between gap-4 border-b border-border/60 py-1">
+                <dt className="uppercase tracking-wider">x1, y1</dt>
+                <dd className="text-text">
+                  {box.x1}, {box.y1}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-border/60 py-1">
+                <dt className="uppercase tracking-wider">x2, y2</dt>
+                <dd className="text-text">
+                  {box.x2}, {box.y2}
+                </dd>
+              </div>
+            </dl>
+          )}
+        </ForensicFrame>
       </section>
 
       <section className="mt-14 animate-fade-up" style={{ animationDelay: "180ms" }}>
         <ForensicFrame scan className="panel forensic-grid overflow-hidden p-6 md:p-10">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="label-eyebrow text-accent">Narrative forensics</div>
-            <span className="chip-trace">Claude vision</span>
-            <span className="font-mono text-[10px] text-faint">Plain-language examiner notes</span>
-          </div>
-
-          <div className="mt-6">
-            {descriptionLoading ? (
-              <div className="flex items-center gap-3 font-mono text-sm text-muted">
-                <span className="h-2 w-2 animate-pulse-soft rounded-full bg-accent shadow-[0_0_14px_rgba(232,207,90,0.7)]" />
-                <span className="animate-pulse-soft">Diffing perceptual cues and drafting language…</span>
-              </div>
-            ) : descriptionError ? (
-              <div className="font-mono text-sm text-verdict-red">{descriptionError}</div>
-            ) : (
-              <p className="font-display text-2xl leading-snug text-text md:text-3xl md:leading-snug">
-                {description || "No description available."}
-              </p>
-            )}
-          </div>
+          <div className="label-eyebrow text-accent">Methodology (verbose)</div>
+          <ul className="mt-6 space-y-4 font-mono text-sm leading-relaxed text-muted md:text-base">
+            <li>
+              <span className="text-accent">Normalization.</span> Both exhibits are resized to 256×256 so
+              each pixel index aligns for SSIM. pHash is computed on the full decoded RGB stills before
+              that resize.
+            </li>
+            <li>
+              <span className="text-accent">Where it changed (SSIM).</span> Grayscale structural similarity
+              yields a per-pixel dissimilarity map. Values are inverted so 0 means “same structure” and 1
+              means “different,” then multiplied by three and clipped for presentation contrast (RdYlGnᵣ
+              colormap).
+            </li>
+            <li>
+              <span className="text-accent">How similar overall (pHash).</span> A 64-bit perceptual hash
+              summarizes global appearance. Reported similarity is{" "}
+              <code className="rounded bg-bg/80 px-1 text-accent">100 × (1 − hamming / 64)</code>.
+            </li>
+            <li>
+              <span className="text-accent">Tamper % &amp; verdict.</span> Tamper percent is the fraction of
+              normalized pixels above the internal threshold on the amplified map. Verdict tiers combine
+              pHash similarity and tamper area per backend rules.
+            </li>
+          </ul>
+          <p className="mt-8 border-l-2 border-accent/40 pl-4 text-sm italic text-faint">
+            Outputs are deterministic for a given pair of files — suitable for screenshots, slides, or
+            an accompanying written report.
+          </p>
         </ForensicFrame>
       </section>
-
-      <section
-        className="mt-12 flex flex-wrap items-center gap-5 animate-fade-up"
-        style={{ animationDelay: "240ms" }}
-      >
-        <button
-          onClick={() => setShowDMCA(true)}
-          disabled={descriptionLoading || !description}
-          className="btn-primary px-10 py-4 text-base tracking-[0.16em] md:text-lg"
-        >
-          Generate DMCA brief →
-        </button>
-        <span className="max-w-xs font-mono text-[10px] uppercase leading-relaxed tracking-[0.28em] text-faint">
-          Legal-adjacent draft with your metrics baked in — edit before you send.
-        </span>
-      </section>
-
-      {showDMCA && (
-        <DMCAModal
-          onClose={() => setShowDMCA(false)}
-          description={description || ""}
-          similarity={comparison.similarity}
-          caseId={caseId}
-        />
-      )}
     </div>
   );
 }

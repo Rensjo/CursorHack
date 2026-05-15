@@ -1,32 +1,64 @@
-// Centralized API client for the Sonovera backend.
-// In dev, requests go through Vite's /api proxy to localhost:8000.
-// In production, set VITE_API_BASE to the deployed backend URL.
+// Sonovera backend client — compare endpoint only (multipart).
 
 const BASE = import.meta.env.VITE_API_BASE || "/api";
 
-async function postJSON(path, body) {
-  const response = await fetch(`${BASE}${path}`, {
+function dataURLToBlob(dataURL) {
+  const idx = dataURL.indexOf(",");
+  const header = idx >= 0 ? dataURL.slice(0, idx) : "data:image/png;base64";
+  const b64 = idx >= 0 ? dataURL.slice(idx + 1) : dataURL;
+  const mimeMatch = header.match(/data:([^;]+)/);
+  const mime = mimeMatch?.[1] || "image/png";
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+function safeFilename(name, fallback) {
+  if (!name || typeof name !== "string") return fallback;
+  const trimmed = name.trim();
+  return trimmed || fallback;
+}
+
+/**
+ * POST /compare — multipart original + suspect files.
+ * @param {string} originalDataURL
+ * @param {string} suspectDataURL
+ * @param {string} [originalName]
+ * @param {string} [suspectName]
+ */
+export async function compareImages(originalDataURL, suspectDataURL, originalName, suspectName) {
+  const form = new FormData();
+  form.append(
+    "original",
+    dataURLToBlob(originalDataURL),
+    safeFilename(originalName, "original.jpg"),
+  );
+  form.append(
+    "suspect",
+    dataURLToBlob(suspectDataURL),
+    safeFilename(suspectName, "suspect.jpg"),
+  );
+
+  const response = await fetch(`${BASE}/compare`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: form,
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${response.status}: ${text}`);
+    let detail = await response.text();
+    try {
+      const j = JSON.parse(detail);
+      if (j.detail != null) detail = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail);
+    } catch {
+      /* use raw text */
+    }
+    throw new Error(`${response.status}: ${detail}`);
   }
 
   return response.json();
 }
 
-// Strip the data: prefix from a base64 data URL since backend wants raw base64
-function stripDataURI(dataUrl) {
-  if (typeof dataUrl !== "string") return dataUrl;
-  const idx = dataUrl.indexOf(",");
-  return idx >= 0 ? dataUrl.slice(idx + 1) : dataUrl;
-}
-
-// Convert a File to a base64-encoded data URL
 export function fileToDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,22 +66,4 @@ export function fileToDataURL(file) {
     reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
-}
-
-export async function compareImages(originalDataURL, suspectDataURL) {
-  return postJSON("/compare", {
-    original: stripDataURI(originalDataURL),
-    suspect: stripDataURI(suspectDataURL),
-  });
-}
-
-export async function describeChanges(originalDataURL, suspectDataURL) {
-  return postJSON("/describe", {
-    original: stripDataURI(originalDataURL),
-    suspect: stripDataURI(suspectDataURL),
-  });
-}
-
-export async function generateDMCA(payload) {
-  return postJSON("/dmca", payload);
 }

@@ -4,9 +4,9 @@ import ForensicFrame from "./ForensicFrame.jsx";
 const STAGES = [
   "Normalizing images to 256×256",
   "Running SSIM structural comparison",
-  "Computing perceptual hash distance",
-  "Generating heatmap overlay",
-  "Forensic analysis by Claude vision",
+  "Computing perceptual hash (pHash)",
+  "Rendering heatmap & overlay PNGs",
+  "Aggregating tamper metrics & verdict",
 ];
 
 export default function LoadingState() {

@@ -3,7 +3,7 @@ import { fileToDataURL } from "../api.js";
 import ForensicFrame from "./ForensicFrame.jsx";
 
 const MARQUEE =
-  " SSIM structural diff  ·  perceptual hash distance  ·  tamper heatmap (Δ)  ·  Claude vision narrative  ·  one-click DMCA draft  · ";
+  " SSIM structural diff  ·  perceptual hash (pHash)  ·  tamper heatmap (Δ)  ·  overlay composite  ·  bounded presentation output  · ";
 
 function DropZone({ label, slot, exhibit, value, onChange }) {
   const inputRef = useRef(null);
@@ -140,17 +140,17 @@ export default function UploadScreen({ onCompare, error }) {
                 </em>
               </h1>
               <p className="mt-8 max-w-2xl border-l-2 border-accent/50 pl-5 text-lg leading-relaxed text-muted md:text-xl">
-                Drop two images — we quantify overlap (SSIM + pHash), paint a tamper heatmap,
-                narrate findings with vision AI, then generate a DMCA you can ship. Built to win
-                the room and survive the judging table.
+                Drop your original and a suspect copy. The backend aligns both frames, runs SSIM for a
+                structural heatmap, pHash for global similarity, then returns overlays and a plain-language
+                verdict — ready to screen-share or drop into a slide.
               </p>
               <div className="mt-8 flex flex-wrap gap-2">
                 {[
                   "256× normalize",
-                  "Δ hotspot map",
-                  "Chain-of-thought viz",
-                  "Claude forensic write-up",
-                  "DMCA in one tap",
+                  "SSIM Δ map",
+                  "pHash similarity %",
+                  "Overlay + pure heatmap",
+                  "Verbose report view",
                 ].map((t) => (
                   <span key={t} className="chip-trace border-border/70 bg-bg/30 text-muted">
                     {t}
@@ -163,7 +163,7 @@ export default function UploadScreen({ onCompare, error }) {
               <div className="mt-2 text-muted">Image theft forensics</div>
               <div className="mt-4 border border-border/80 bg-bg/40 px-3 py-2 text-left tracking-[0.2em] text-text shadow-[inset_0_0_0_1px_rgba(253,234,167,0.06)]">
                 <div className="text-faint">Status</div>
-                <div className="mt-1 text-accent">Acquire → Diff → Narrate → Act</div>
+                <div className="mt-1 text-accent">Acquire → Diff → Report</div>
               </div>
             </div>
           </div>
@@ -204,8 +204,8 @@ export default function UploadScreen({ onCompare, error }) {
           <div className="text-center font-mono text-[10px] uppercase leading-relaxed tracking-[0.3em] text-faint">
             {canSubmit ? (
               <>
-                Estimated runtime · under <span className="text-accent/90">30 seconds</span> · results
-                are presentation-ready
+                Typical runtime · under <span className="text-accent/90">a few seconds</span> · heatmap &
+                metrics from live API
               </>
             ) : (
               <>Awaiting both exhibits to arm the comparator</>
@@ -221,8 +221,8 @@ export default function UploadScreen({ onCompare, error }) {
         <footer className="mt-20 border-t border-border/80 pt-8">
           <div className="flex flex-wrap items-center justify-between gap-5 font-mono text-[10px] uppercase tracking-[0.26em] text-faint">
             <div className="max-w-xl text-muted">
-              Forensic stack · SSIM + pHash + heatmap Δ + Claude vision — tuned for courtroom-style
-              clarity, not vibes.
+              Compare stack · FastAPI + scikit-image SSIM + ImageHash pHash — tuned for slide-ready
+              clarity.
             </div>
             <div className="text-right text-accent/80">
               Cursor Hack Manila
