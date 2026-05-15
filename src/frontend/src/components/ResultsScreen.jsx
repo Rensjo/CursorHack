@@ -26,7 +26,7 @@ export default function ResultsScreen({ comparison, description, descriptionLoad
       <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-fade-up">
         <div>
           <div className="label-eyebrow text-accent">Sonovera · Case file</div>
-          <h1 className="mt-3 font-display text-4xl italic md:text-5xl">
+          <h1 className="mt-3 font-display text-4xl italic drop-shadow-[0_2px_16px_rgba(5,15,25,0.7)] md:text-5xl">
             Forensic report
           </h1>
         </div>

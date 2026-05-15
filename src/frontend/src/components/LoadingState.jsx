@@ -22,7 +22,7 @@ export default function LoadingState() {
     <div className="relative z-10 flex min-h-[80vh] flex-col items-center justify-center px-6">
       <div className="label-eyebrow mb-6 text-accent">Analysis in progress</div>
 
-      <h2 className="font-display text-4xl italic text-text md:text-5xl">
+      <h2 className="font-display text-4xl italic text-text drop-shadow-[0_2px_16px_rgba(5,15,25,0.65)] md:text-5xl">
         Examining evidence…
       </h2>
 

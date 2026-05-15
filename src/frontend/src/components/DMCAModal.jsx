@@ -51,7 +51,7 @@ export default function DMCAModal({ onClose, description, similarity }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-bg/85 px-4 py-12 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[#050f18]/82 px-4 py-12 backdrop-blur-md"
       onClick={onClose}
     >
       <div

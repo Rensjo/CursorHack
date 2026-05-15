@@ -1,4 +1,5 @@
 import { useState } from "react";
+import StarryBackdrop from "./components/StarryBackdrop.jsx";
 import UploadScreen from "./components/UploadScreen.jsx";
 import LoadingState from "./components/LoadingState.jsx";
 import ResultsScreen from "./components/ResultsScreen.jsx";
@@ -46,20 +47,23 @@ export default function App() {
     setError(null);
   }
 
-  if (view === "loading") return <LoadingState />;
-
-  if (view === "results" && comparison && images) {
-    return (
-      <ResultsScreen
-        comparison={comparison}
-        description={description}
-        descriptionLoading={descriptionLoading}
-        descriptionError={descriptionError}
-        images={images}
-        onReset={handleReset}
-      />
-    );
-  }
-
-  return <UploadScreen onCompare={handleCompare} error={error} />;
+  return (
+    <>
+      <StarryBackdrop />
+      {view === "loading" ? (
+        <LoadingState />
+      ) : view === "results" && comparison && images ? (
+        <ResultsScreen
+          comparison={comparison}
+          description={description}
+          descriptionLoading={descriptionLoading}
+          descriptionError={descriptionError}
+          images={images}
+          onReset={handleReset}
+        />
+      ) : (
+        <UploadScreen onCompare={handleCompare} error={error} />
+      )}
+    </>
+  );
 }

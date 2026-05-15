@@ -80,7 +80,7 @@ export default function UploadScreen({ onCompare, error }) {
     <div className="relative z-10 mx-auto max-w-6xl px-6 py-12 md:py-20">
       <header className="mb-16 animate-fade-up">
         <div className="label-eyebrow mb-6">Sonovera · Image Theft Forensics</div>
-        <h1 className="font-display text-5xl leading-[1.05] md:text-7xl">
+        <h1 className="font-display text-5xl leading-[1.05] drop-shadow-[0_2px_18px_rgba(5,15,25,0.75)] md:text-7xl">
           Prove it was{" "}
           <em className="text-accent">stolen</em>.
         </h1>
