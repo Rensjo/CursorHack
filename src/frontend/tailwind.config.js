@@ -55,6 +55,14 @@ export default {
           "0%, 100%": { opacity: "0.35", transform: "scale(1)" },
           "50%": { opacity: "1", transform: "scale(1.15)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.55", filter: "brightness(1)" },
+          "50%": { opacity: "1", filter: "brightness(1.12)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.4s ease-out both",
@@ -62,6 +70,8 @@ export default {
         "sky-spin": "sky-spin 200s linear infinite",
         "sky-spin-ccw": "sky-spin-ccw 260s linear infinite",
         "star-twinkle": "star-twinkle var(--tw-duration, 3.5s) ease-in-out infinite",
+        marquee: "marquee 32s linear infinite",
+        "glow-pulse": "glow-pulse 2.8s ease-in-out infinite",
       },
     },
   },
